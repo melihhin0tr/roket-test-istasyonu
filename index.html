@@ -3,243 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hava İtki Sistemi Hesaplayıcı (Pro)</title>
+    <title>Özel İtki Hesaplayıcı (Python Core)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #ea580c; --bg: #f3f4f6; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--primary); padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --accent: #f97316; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--dark); padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            max-width: 1000px;
-            width: 100%;
+        .main-wrapper { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; max-width: 1100px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .full-col { grid-column: 1 / -1; }
+
+        h1 { color: var(--dark); text-align: center; width: 100%; margin-bottom: 5px; }
+        .sub-text { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.9rem; }
+
+        label { display: block; font-weight: 600; margin-bottom: 5px; color: #334155; }
+        input { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; margin-bottom: 15px; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        button {
+            width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
+        button:hover { background: #1d4ed8; }
 
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-        .full-width { grid-column: 1 / -1; }
-
-        h1 { margin-bottom: 5px; color: var(--primary); text-align: center; }
-        .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 0.9rem; }
-        
-        label { display: block; font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 5px; margin-top: 15px; }
-        input, select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: 0.2s; }
-        input:focus { border-color: var(--accent); outline: none; }
-
-        .btn-main {
-            background-color: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px;
-            font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 25px; transition: transform 0.1s;
+        .result-box {
+            background: #eff6ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;
         }
-        .btn-main:active { transform: scale(0.98); }
+        .big-val { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+        .small-val { font-size: 1.1rem; color: #1e40af; }
 
-        .metric-box {
-            background: #fff7ed; border: 1px solid #ffedd5; padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px;
+        .links { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .shop-btn {
+            padding: 12px; text-decoration: none; background: white; border: 1px solid #cbd5e1; border-radius: 6px;
+            color: var(--dark); font-weight: 600; display: flex; justify-content: space-between; transition: 0.2s;
         }
-        .metric-value { font-size: 2.5rem; font-weight: 800; color: var(--accent); line-height: 1; }
-        .metric-label { font-size: 0.9rem; color: #9a3412; margin-top: 5px; font-weight: 600; }
+        .shop-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-        .alert-box {
-            background-color: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-top: 15px; display: none;
-        }
-
-        .product-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .shop-link {
-            display: flex; justify-content: space-between; align-items: center; text-decoration: none;
-            padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; color: var(--primary); font-weight: 600; transition: 0.2s;
-        }
-        .shop-link:hover { border-color: var(--accent); color: var(--accent); background: white; }
-
-        @media (max-width: 700px) { .dashboard { grid-template-columns: 1fr; } }
+        @media(max-width: 768px) { .main-wrapper { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Kuru Hava İtki Hesaplayıcı</h1>
-    <p class="subtitle">Termodinamik Kuru Hava Modeli ($\gamma=1.4$)</p>
+    <h1>🚀 Özel İtki Sistemi Hesaplayıcı</h1>
+    <p class="sub-text">Kullanıcı Tanımlı Python Algoritması Entegre Edildi</p>
 
-    <div class="dashboard">
+    <div class="main-wrapper">
         
         <div class="card">
-            <h3 style="margin-top:0;">🔧 Sistem Ayarları</h3>
+            <h3>⚙️ Parametreler</h3>
+            
+            <label>Tüp Basıncı (Bar)</label>
+            <input type="number" id="pressure" value="300" placeholder="300">
 
-            <label>Tank / Manifolt Basıncı (Bar)</label>
-            <input type="number" id="pressure" value="300" placeholder="Örn: 300">
+            <label>Tüp Hacmi (Litre)</label>
+            <input type="number" id="volume" value="9" placeholder="9">
 
-            <label>Nozül Boğaz Çapı (mm) <span style="color:var(--accent); font-size:0.8em;">(En dar yer)</span></label>
-            <input type="number" id="diameter" value="2.0" step="0.1" placeholder="Örn: 2.0">
+            <label>Nozül Boğaz Çapı (mm)</label>
+            <input type="number" id="diameter" value="2.0" step="0.1" placeholder="2.0">
 
-            <label>Nozül Sayısı (Adet)</label>
+            <label>Nozül Sayısı</label>
             <input type="number" id="count" value="4">
 
-            <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:15px; font-size:0.85rem;">
-                <strong>Gaz Tipi:</strong> Kuru Hava (Dry Air) <br>
-                <strong>Gamma ($\gamma$):</strong> 1.4 <br>
-                <strong>Gaz Sabiti (R):</strong> 287 J/(kg·K)
+            <div style="background:#f1f5f9; padding:10px; border-radius:6px; font-size:0.8rem; color:#475569;">
+                <strong>Algoritma Sabitleri:</strong><br>
+                - Gaz: Kuru Hava (M=0.02897)<br>
+                - Verim Çarpanı: 0.8<br>
+                - Sıcaklık: 293 K (20°C)
             </div>
 
-            <button class="btn-main" onclick="calculatePhysics()">HESAPLA</button>
+            <button onclick="calculateUserCode()">HESAPLA</button>
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">📊 Test Sonuçları</h3>
+            <h3>📊 Hesap Sonucu</h3>
             
-            <div class="metric-box">
-                <div class="metric-value" id="thrustResult">0 N</div>
-                <div class="metric-label">Toplam İtki Kuvveti</div>
-                <div style="font-size:0.9rem; color:#666; margin-top:5px;">≈ <span id="kgResult">0</span> kgf</div>
+            <div class="result-box">
+                <div class="small-val">Toplam İtki Kuvveti</div>
+                <div class="big-val" id="thrustN">0 N</div>
+                <div class="small-val">≈ <span id="thrustKg">0</span> kgf</div>
             </div>
 
-            <div class="alert-box" id="warningMsg">
-                ⚠️ <strong>Hedef Uyarısı:</strong> 1400N itki alabilmek için nozül çapını yaklaşık <strong>3.2 mm</strong> yapmalısınız.
-            </div>
-
-            <div style="margin-top:20px;">
-                <label>Önerilen Load Cell (Yük Hücresi)</label>
-                <div id="loadcell-links" class="product-list">
-                    <div style="text-align:center; color:#94a3b8; padding:10px;">Hesaplama bekleniyor...</div>
-                </div>
+            <h4 style="margin-top:20px;">🛒 Uygun Load Cell Seçimi:</h4>
+            <div class="links" id="linkBox">
+                <div style="text-align:center; color:#94a3b8;">Hesaplama bekleniyor...</div>
             </div>
         </div>
 
-        <div class="card full-width">
-            <h3 style="margin-top:0;">📈 Basınç ve İtki Simülasyonu</h3>
-            <div style="height: 300px; width: 100%;">
-                <canvas id="simChart"></canvas>
+        <div class="card full-col">
+            <h3>📈 Simülasyon Grafiği</h3>
+            <div style="height: 300px;">
+                <canvas id="chart"></canvas>
             </div>
-            <p style="font-size:0.8rem; color:#94a3b8; text-align:center;">*Grafik, tank boşalırken azalan basınç (Blow-down) senaryosunu gösterir.</p>
         </div>
-
     </div>
 
     <script>
-        // --- GRAFİK AYARLARI ---
-        const ctx = document.getElementById('simChart').getContext('2d');
-        let chart = new Chart(ctx, {
+        // --- GRAFİK KURULUMU ---
+        const ctx = document.getElementById('chart').getContext('2d');
+        let myChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'İtki (Newton)',
+                    label: 'İtki (N)',
                     data: [],
-                    borderColor: '#ea580c',
-                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
                     fill: true,
-                    tension: 0.4,
-                    borderWidth: 2
+                    tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { title: { display: true, text: 'Zaman (saniye)' } },
-                    y: { beginAtZero: true }
-                },
-                animation: { duration: 1000 }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
-        function calculatePhysics() {
+        // --- SENİN PYTHON KODUNUN JS VERSİYONU ---
+        function calculateUserCode() {
             // 1. Girdileri Al
             const P_bar = parseFloat(document.getElementById('pressure').value);
+            const V_lt = parseFloat(document.getElementById('volume').value);
             const D_mm = parseFloat(document.getElementById('diameter').value);
-            const N = parseFloat(document.getElementById('count').value);
+            const Count = parseFloat(document.getElementById('count').value);
 
-            if (!P_bar || !D_mm || !N) { alert("Lütfen tüm değerleri girin."); return; }
+            // Sabitler (Python kodundaki gibi)
+            const T_K = 293;
+            const P_dis_bar = 1;
+            const R_universal = 8.314; // J/mol·K
+            const M = 0.02897; // kg/mol
+            const gamma = 1.4;
 
-            // 2. FİZİKSEL HESAPLAMA (KURU HAVA İÇİN)
-            // Birim Dönüştürme
-            const P_pa = P_bar * 100000; // Bar -> Pascal
-            const A_throat_mm2 = Math.PI * Math.pow((D_mm / 2), 2); // Tek nozül alanı (mm2)
-            const A_total_m2 = (A_throat_mm2 * N) / 1000000; // Toplam alan (m2)
+            // 2. Birim Dönüşümleri
+            const p = P_bar * 100000; // Bar -> Pascal
+            const p_dis = P_dis_bar * 100000;
+            const r = (D_mm / 1000.0) / 2; // Yarıçap (metre)
+            const A = Math.PI * Math.pow(r, 2); // Alan (m2)
 
-            // Kuru Hava Özellikleri
-            const gamma = 1.4; 
-            
-            // Thrust Coefficient (Cf) Hesabı
-            // İdeal roket formülü (Vakumda max değer ~2.0, atmosferde ~1.2 - 1.6 arasıdır)
-            // 300 bar çok yüksek olduğu için tam genleşme zordur, ortalama verimli bir nozül için:
-            // Cf teorik hesap:
-            // Cf = sqrt( (2*gamma^2 / (gamma-1)) * (2/(gamma+1))^((gamma+1)/(gamma-1)) * [1 - (Patm/Pc)^((gamma-1)/gamma)] )
-            
-            const P_atm = 101325; // 1 atm
-            const term1 = (2 * Math.pow(gamma, 2)) / (gamma - 1);
-            const term2 = Math.pow(2 / (gamma + 1), (gamma + 1) / (gamma - 1));
-            const term3 = 1 - Math.pow(P_atm / P_pa, (gamma - 1) / gamma);
-            
-            let Cf = Math.sqrt(term1 * term2 * term3);
-            
-            // Pratik Kayıplar (Discharge Coefficient - Cd)
-            // Gerçek nozüller ideal değildir. Konik nozül için Cd ~ 0.95
-            const Cd = 0.95;
+            // 3. Hava Özellikleri Hesabı (Fonksiyon içi mantık)
+            // rho = (p_Pa * M) / (R_universal * T_K)
+            const rho = (p * M) / (R_universal * T_K);
 
-            // SONUÇ KUVVETİ (Newton)
-            const Force = P_pa * A_total_m2 * Cf * Cd;
-            const ForceKg = Force / 9.81;
+            // 4. Çıkış Hızı ve Kütle Debisi (Kodundaki Mantık)
+            const p0 = p;
+            const p_exit = p_dis;
 
-            // 3. EKRANA YAZ
-            document.getElementById('thrustResult').innerText = Math.round(Force) + " N";
-            document.getElementById('kgResult').innerText = ForceKg.toFixed(1);
+            // Chen Formülü benzeri terim hesabı
+            // term = ((2 / (gamma - 1)) * (1 - (p_exit / p0)**((gamma - 1) / gamma)))**0.5
+            let term = Math.pow(
+                (2 / (gamma - 1)) * (1 - Math.pow(p_exit / p0, (gamma - 1) / gamma)), 
+                0.5
+            );
 
-            // 4. HEDEF ANALİZİ (1400N İÇİN UYARI)
-            const warningBox = document.getElementById('warningMsg');
-            if (Force < 1000) {
-                warningBox.style.display = 'block';
-            } else {
-                warningBox.style.display = 'none';
-            }
+            // v_exit = term * math.sqrt(gamma * R_universal / M * sicaklik_K)
+            const v_exit = term * Math.sqrt(gamma * (R_universal / M) * T_K);
 
-            // 5. LOAD CELL SEÇİMİ VE LİNKLER
-            const safetyFactor = 2.0; // Güvenlik katsayısı
-            const requiredCap = ForceKg * safetyFactor;
-            generateLinks(requiredCap);
+            // m_dot = rho * A * v_exit
+            // NOT: Burada tank yoğunluğunu kullanıyoruz (Senin koduna sadık kaldık)
+            const m_dot = rho * A * v_exit;
 
-            // 6. GRAFİK SİMÜLASYONU
-            updateChart(Force);
+            // F = m_dot * v_exit
+            let F_single = m_dot * v_exit;
+
+            // Verim Katsayısı
+            const verim = 0.8;
+            F_single = F_single * verim;
+
+            // 5. Toplam İtki (Nozül sayısı ile çarp)
+            const F_total = F_single * Count;
+            const F_kg = F_total / 9.81;
+
+            // 6. Sonuçları Yazdır
+            document.getElementById('thrustN').innerText = F_total.toFixed(2) + " N";
+            document.getElementById('thrustKg').innerText = F_kg.toFixed(2);
+
+            // 7. Load Cell Linkleri
+            generateLinks(F_kg);
+
+            // 8. Grafiği Güncelle
+            updateChart(F_total);
         }
 
-        function generateLinks(reqKg) {
-            const container = document.getElementById('loadcell-links');
+        function generateLinks(kg) {
+            const container = document.getElementById('linkBox');
             container.innerHTML = "";
-
-            // Kapasite Yuvarlama (Standart Ürünler)
+            
+            // Standart Kapasite Seçimi
             const standards = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
-            let selected = standards.find(s => s >= reqKg);
-            if (!selected) selected = "5000+";
+            let target = standards.find(s => s >= (kg * 2)); // Güvenlik katsayısı 2x
+            if(!target) target = "5000+";
 
             const links = [
-                { name: `Robotistan'da ${selected}kg Load Cell`, url: `https://www.robotistan.com/arama?q=load+cell` },
-                { name: `Direnç.net ${selected}kg Sensör`, url: `https://www.direnc.net/arama?q=load+cell` },
-                { name: `Google'da ${selected}kg S-Type Ara`, url: `https://www.google.com/search?tbm=shop&q=s-type+load+cell+${selected}kg` }
+                { name: `Robotistan (${target}kg)`, url: `https://www.robotistan.com/arama?q=load+cell` },
+                { name: `Direnç.net (${target}kg)`, url: `https://www.direnc.net/arama?q=load+cell` },
+                { name: `Google Alışveriş (${target}kg)`, url: `https://www.google.com/search?tbm=shop&q=load+cell+${target}kg` }
             ];
 
-            links.forEach(link => {
+            links.forEach(l => {
                 const a = document.createElement('a');
-                a.href = link.url;
-                a.className = 'shop-link';
+                a.href = l.url;
                 a.target = "_blank";
-                a.innerHTML = `<span>${link.name}</span> <span>↗</span>`;
+                a.className = 'shop-btn';
+                a.innerHTML = `<span>${l.name}</span> <span>🔗</span>`;
                 container.appendChild(a);
             });
         }
 
         function updateChart(peakForce) {
-            // Blow-down simülasyonu (Üstel Azalma)
+            // Blow-down simülasyonu
             const labels = [];
             const data = [];
-            let currentForce = peakForce;
-            
-            for (let t = 0; t <= 10; t += 0.5) {
-                labels.push(t.toFixed(1));
-                // Her saniye basınç %20 düşüyor gibi simüle et
-                data.push(currentForce);
-                currentForce = currentForce * 0.8; 
+            let f = peakForce;
+            for(let t=0; t<=10; t+=0.5) {
+                labels.push(t);
+                data.push(f);
+                f = f * 0.85; // Her adımda basınç/itki azalır
             }
-
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = data;
-            chart.update();
+            myChart.data.labels = labels;
+            myChart.data.datasets[0].data = data;
+            myChart.update();
         }
     </script>
 </body>
