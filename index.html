@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roket İtki Test İstasyonu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #0f172a;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--secondary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Sol Panel: Hesaplamalar */
+        .control-panel {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        /* Sağ Panel: Grafik */
+        .graph-panel {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            flex: 2;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-calculate:hover { background-color: #1d4ed8; }
+
+        .btn-simulate {
+            background-color: var(--success);
+            margin-top: 10px;
+            width: 100%;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .results {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .product-links {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .shop-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            background-color: #333;
+            transition: opacity 0.2s;
+        }
+        .shop-btn:hover { opacity: 0.9; }
+        .shop-robotistan { background-color: #0066cc; }
+        .shop-direnc { background-color: #ff6600; }
+        .shop-amazon { background-color: #232f3e; }
+
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center; width: 100%;">🚀 Roket Test İstasyonu Kontrol Paneli</h1>
+
+    <div class="main-wrapper">
+        
+        <div class="control-panel">
+            <h2>⚙️ Parametreler</h2>
+            
+            <div class="input-group">
+                <label>Tüp Basıncı (Bar)</label>
+                <input type="number" id="pressure" value="300">
+            </div>
+            <div class="input-group">
+                <label>Nozül Sayısı (Adet)</label>
+                <input type="number" id="nozzleCount" value="4">
+            </div>
+            <div class="input-group">
+                <label>Nozül Çapı (mm)</label>
+                <input type="number" id="nozzleDiameter" value="2.0" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>Güvenlik Katsayısı</label>
+                <select id="safetyFactor">
+                    <option value="1.5">1.5x</option>
+                    <option value="2.0" selected>2.0x (Önerilen)</option>
+                    <option value="3.0">3.0x</option>
+                </select>
+            </div>
+
+            <button class="btn-calculate" onclick="calculate()">HESAPLA & ÜRÜN BUL</button>
+
+            <div class="results" id="resultBox" style="display:none;">
+                <strong>Tahmini İtki:</strong> <span id="thrustVal">0</span> N<br>
+                <strong>Gerekli Kapasite:</strong> <span id="capVal">0</span> kg
+                
+                <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
+                
+                <div style="font-size: 0.9rem; margin-bottom: 5px;">🛒 Önerilen Load Cell Linkleri:</div>
+                <div class="product-links" id="linkContainer">
+                    </div>
+            </div>
+        </div>
+
+        <div class="graph-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>📈 Canlı İtki Grafiği (Thrust Curve)</h2>
+                <button class="btn-simulate" style="width: auto; padding: 8px 20px;" onclick="startSimulation()">Testi Başlat (Simüle)</button>
+            </div>
+            <canvas id="thrustChart"></canvas>
+            <p style="font-size: 0.8rem; color: #666; text-align: center;">
+                *Şu an simülasyon modu aktiftir. Gerçek veriler Arduino/Serial bağlantısı ile buraya akabilir.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. GRAFİK KURULUMU (Chart.js) ---
+        const ctx = document.getElementById('thrustChart').getContext('2d');
+        let thrustChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Zaman (saniye)
+                datasets: [{
+                    label: 'İtki Kuvveti (Newton)',
+                    data: [],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3 // Çizgi yumuşatma
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false, // Canlı veri için animasyonu kapatıyoruz
+                scales: {
+                    x: { title: { display: true, text: 'Zaman (sn)' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Kuvvet (N)' } }
+                }
+            }
+        });
+
+        // --- 2. HESAPLAMA VE ÜRÜN ÖNERİSİ ---
+        let calculatedThrust = 0;
+
+        function calculate() {
+            const P_bar = parseFloat(document.getElementById('pressure').value);
+            const N_count = parseFloat(document.getElementById('nozzleCount').value);
+            const D_mm = parseFloat(document.getElementById('nozzleDiameter').value);
+            const Safety = parseFloat(document.getElementById('safetyFactor').value);
+
+            // Fiziksel Hesap
+            const P_pa = P_bar * 100000;
+            const P_atm = 101325;
+            const gamma = 1.4;
+            
+            const areaM2 = Math.PI * Math.pow((D_mm / 1000) / 2, 2) * N_count;
+            
+            let cf = Math.sqrt(
+                (2 * Math.pow(gamma, 2) / (gamma - 1)) *
+                Math.pow(2 / (gamma + 1), (gamma + 1) / (gamma - 1)) *
+                (1 - Math.pow(P_atm / P_pa, (gamma - 1) / gamma))
+            );
+            if(isNaN(cf) || cf < 0) cf = 0;
+
+            calculatedThrust = P_pa * areaM2 * cf;
+            const reqKg = (calculatedThrust * Safety) / 9.81;
+
+            // Sonuçları Yaz
+            document.getElementById('thrustVal').innerText = calculatedThrust.toFixed(2);
+            document.getElementById('capVal').innerText = reqKg.toFixed(2);
+            document.getElementById('resultBox').style.display = 'block';
+
+            // Linkleri Oluştur
+            generateLinks(reqKg);
+        }
+
+        function generateLinks(kg) {
+            const container = document.getElementById('linkContainer');
+            container.innerHTML = ""; // Temizle
+
+            // Kapasiteyi yuvarla (Arama için)
+            let searchKg = 0;
+            if (kg < 10) searchKg = 10;
+            else if (kg < 50) searchKg = 50;
+            else if (kg < 100) searchKg = 100;
+            else if (kg < 500) searchKg = 500;
+            else searchKg = "1 ton";
+
+            // Link Şablonları (Otomatik Arama Linkleri)
+            const links = [
+                {
+                    name: `Robotistan'da ${searchKg}kg Load Cell Ara`,
+                    url: `https://www.robotistan.com/arama?q=load+cell+${searchKg}kg`,
+                    cls: 'shop-robotistan'
+                },
+                {
+                    name: `Direnç.net'te ${searchKg}kg Yük Hücresi`,
+                    url: `https://www.direnc.net/arama?q=load+cell+${searchKg}`,
+                    cls: 'shop-direnc'
+                },
+                {
+                    name: `Amazon'da Load Cell Modelleri`,
+                    url: `https://www.amazon.com.tr/s?k=load+cell+${searchKg}kg`,
+                    cls: 'shop-amazon'
+                }
+            ];
+
+            links.forEach(link => {
+                const a = document.createElement('a');
+                a.href = link.url;
+                a.target = "_blank"; // Yeni sekmede aç
+                a.className = `shop-btn ${link.cls}`;
+                a.innerText = link.name + " 🔗";
+                container.appendChild(a);
+            });
+        }
+
+        // --- 3. SİMÜLASYON (CANLI GRAFİK TESTİ) ---
+        let simInterval;
+        let time = 0;
+
+        function startSimulation() {
+            // Önce hesaplama yapılmış olmalı
+            if(calculatedThrust === 0) calculate();
+
+            // Grafiği Temizle
+            thrustChart.data.labels = [];
+            thrustChart.data.datasets[0].data = [];
+            thrustChart.update();
+            
+            clearInterval(simInterval);
+            time = 0;
+            
+            let currentThrust = 0;
+            const targetThrust = calculatedThrust;
+
+            simInterval = setInterval(() => {
+                time += 0.1; // 100ms adım
+
+                // Basit bir roket profili simülasyonu:
+                // 0-1 sn: Ateşleme (Ramp up)
+                // 1-5 sn: Yanma (Hafif düşüşlü steady state)
+                // 5+ sn: Sönüm (Drop)
+
+                if (time < 1.0) {
+                    // Ramp up
+                    currentThrust = targetThrust * (time / 1.0); 
+                } else if (time < 5.0) {
+                    // Blow-down (Basınç düştükçe itki azalır)
+                    // Gürültü ekle (Noise)
+                    let noise = (Math.random() - 0.5) * (targetThrust * 0.05);
+                    currentThrust = (targetThrust * 0.9) - ((time - 1) * (targetThrust * 0.1)) + noise;
+                } else {
+                    // Burn out
+                    currentThrust = currentThrust * 0.8;
+                }
+
+                if (currentThrust < 0.1 && time > 5.0) {
+                    clearInterval(simInterval);
+                    currentThrust = 0;
+                }
+
+                // Grafiğe Ekle
+                addData(time.toFixed(1), currentThrust);
+
+            }, 100); // 100ms'de bir güncelle
+        }
+
+        function addData(label, data) {
+            thrustChart.data.labels.push(label);
+            thrustChart.data.datasets[0].data.push(data);
+            
+            // Son 50 veriyi göster (Kaydırma efekti)
+            if (thrustChart.data.labels.length > 50) {
+                 thrustChart.data.labels.shift();
+                 thrustChart.data.datasets[0].data.shift();
+            }
+            thrustChart.update();
+        }
+    </script>
+</body>
+</html>
